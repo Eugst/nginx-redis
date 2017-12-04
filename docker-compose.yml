@@ -1,0 +1,33 @@
+version: '2'
+services:
+  cache:
+    image: redis
+    restart: always
+
+  webserver:
+    depends_on:
+      - cache
+      - php
+    image: openresty/openresty:centos-rpm
+    ports:
+      - "8888:80"
+    restart: always
+    volumes:
+      - "./:/app"
+      - "./.vhost/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf"
+      - "./.vhost/cachemanager.lua:/usr/local/openresty/nginx/conf/cachemanager.lua"
+      - "./.vhost/proxy-redis.conf:/usr/local/openresty/nginx/conf/sites-enabled/proxy-redis.conf"
+    links:
+      - cache
+      - php
+  php:
+    image: php:7-fpm
+    volumes:
+      - "./:/app"
+      - "~/.ssh:/root/.ssh"
+      - "~/.composer:/root/.composer"
+    depends_on:
+      - cache
+    links:
+      - cache
+
