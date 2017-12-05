@@ -1,5 +1,8 @@
 version: '2'
 services:
+  session_cache:
+    image: memcached
+    restart: always
   cache:
     image: redis
     restart: always
@@ -8,6 +11,7 @@ services:
     depends_on:
       - cache
       - php
+      - session_cache
     image: openresty/openresty:centos-rpm
     ports:
       - "8888:80"
@@ -20,14 +24,18 @@ services:
     links:
       - cache
       - php
+      - session_cache
   php:
-    image: php:7-fpm
+    build: .
     volumes:
       - "./:/app"
       - "~/.ssh:/root/.ssh"
       - "~/.composer:/root/.composer"
+      - "./.vhost/php-session.conf:/usr/local/etc/php/conf.d/session.ini"
     depends_on:
       - cache
+      - session_cache
     links:
       - cache
+      - session_cache
 
